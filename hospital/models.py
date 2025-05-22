@@ -1,10 +1,28 @@
 from django.db import models
+from cryptography.fernet import Fernet
+from django.conf import settings
+
+fernet = Fernet(settings.ENCRYPTION_KEY)
 
 class Paciente(models.Model):
     nome = models.CharField(max_length=100)
-    cpf = models.CharField(max_length=14, unique=True)
+    cpf_criptografado = models.CharField(max_length=255)
     data_nascimento = models.DateField()
     historico_clinico = models.TextField(blank=True)
+
+    @property
+    def cpf(self):
+        try:
+            return fernet.decrypt(self.cpf_criptografado.encode()).decode()
+        except:
+            return None
+
+    @cpf.setter
+    def cpf(self, value):
+        self.cpf_criptografado = fernet.encrypt(value.encode()).decode()
+
+    def __str__(self):
+        return self.nome
 
 class Profissional(models.Model):
     nome = models.CharField(max_length=100)
